@@ -1119,6 +1119,8 @@
         <li><a href="profile">Profile</a></li>
         <li><a href="login" id="navLoginLink">Login</a></li>
         <li><a href="javascript:logout()" id="navLogoutLink" style="cursor:pointer; display:none;">Logout</a></li>
+<a href="#" id="navLogoutLink" style="cursor:pointer; display:none;" onclick="window.logout ? window.logout() : (window.location.href='/login'); return false;">Logout</a>
+      </ul>
       </ul>
     </div>
   </nav>

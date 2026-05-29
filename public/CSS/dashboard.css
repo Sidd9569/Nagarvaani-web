@@ -1,0 +1,85 @@
+body{
+padding-top:80px;
+}
+
+h1, h2 {
+  color: white;
+  font-weight: bold;
+}
+
+h3 {
+  color: white;
+}
+
+/* Dashboard Stats */
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
+padding:40px;
+}
+
+.stats div{
+background:rgba(255,255,255,0.1);
+padding:25px;
+border-radius:10px;
+text-align:center;
+backdrop-filter:blur(10px);
+transition:0.3s;
+}
+
+.stats div:hover{
+transform:translateY(-5px);
+background:rgba(255,255,255,0.2);
+}
+
+.stats h3{
+margin-bottom:10px;
+}
+
+.stats p{
+font-size:28px;
+font-weight:bold;
+}
+
+/* Chart Container */
+
+canvas{
+max-width:800px;
+margin:auto;
+display:block;
+width:100% !important;
+height:auto;
+}
+
+/* Tables safety */
+.table-responsive,
+.table-wrap,
+.table-card,
+.issues-container,
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+table{
+  max-width: 100%;
+}
+
+img{
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px){
+  body{ padding-top: 70px; }
+  .stats{ padding: 18px; gap: 14px; }
+  .stats p{ font-size: 22px; }
+}
+
+@media (max-width: 480px){
+  body{ padding-top: 66px; }
+  .stats{ padding: 14px; }
+}
+

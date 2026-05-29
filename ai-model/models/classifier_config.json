@@ -1,0 +1,22 @@
+{
+  "type": "filename-based",
+  "keywords": {
+    "pothole": "Pothole",
+    "manhole": "Manhole",
+    "electrical": "Electrical Fault",
+    "electric": "Electrical Fault",
+    "fault": "Electrical Fault",
+    "garbage": "Garbage",
+    "broken": "Broken Streetlight",
+    "streetlight": "Broken Streetlight",
+    "street light": "Broken Streetlight",
+    "light": "Broken Streetlight"
+  },
+  "classes": [
+    "Electrical Fault",
+    "Broken Streetlight",
+    "Manhole",
+    "Garbage",
+    "Pothole"
+  ]
+}

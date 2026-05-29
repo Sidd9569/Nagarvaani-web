@@ -1,0 +1,134 @@
+/* Global Styles */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family: 'Segoe UI', sans-serif;
+}
+
+html, body { overflow-x: hidden; }
+
+body{
+background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+min-height:100vh;
+}
+
+img, video, canvas, svg, iframe{
+  max-width:100%;
+  height:auto;
+}
+
+/* Avoid overflow on mobile */
+img{ max-width:100%; height:auto; }
+pre, code { white-space: pre-wrap; word-break: break-word; }
+
+
+/* Container */
+
+.container{
+  width:90%;
+  margin:auto;
+  padding:40px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px){
+  .container{ width:94%; padding:26px 0; }
+  button{ width:100%; max-width:360px; }
+  form{ padding:18px; max-width:100%; }
+}
+
+@media (max-width: 480px){
+  .container{ width:96%; }
+  label{ margin-top:12px; }
+  input, select, textarea{ padding:12px; }
+  textarea{ height:100px; }
+}
+
+/* Table overflow helper */
+.table-wrap, .overflow-x-auto{ overflow-x:auto; }
+
+/* Headings */
+
+
+h1,h2,h3{
+margin-bottom:20px;
+font-weight:600;
+}
+
+/* Buttons */
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:8px;
+background:#00c6ff;
+color:white;
+font-size:16px;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:#0072ff;
+/* Avoid scaling that can push layout on small screens */
+transform:none;
+}
+
+
+/* Forms */
+
+form{
+background:rgba(255,255,255,0.1);
+padding:30px;
+border-radius:10px;
+backdrop-filter:blur(10px);
+max-width:500px;
+margin:auto;
+}
+
+label{
+display:block;
+margin-top:15px;
+margin-bottom:8px;
+color:#ffffff;
+font-weight:600;
+}
+
+input,select,textarea{
+width:100%;
+padding:10px;
+margin:10px 0;
+border:none;
+border-radius:6px;
+outline:none;
+color:#333;
+background-color:#ffffff;
+}
+
+textarea{
+height:120px;
+resize:none;
+color:#333;
+}
+
+/* Tables */
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:30px;
+background:rgba(255,255,255,0.1);
+}
+
+th,td{
+padding:12px;
+text-align:center;
+border-bottom:1px solid rgba(255,255,255,0.2);
+}
+
+th{
+background:rgba(255,255,255,0.2);
+}

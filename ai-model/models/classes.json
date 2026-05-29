@@ -1,0 +1,11 @@
+{
+  "classes": [
+    "Broken Streetlight",
+    "Electrical Fault",
+    "Garbage",
+    "Manhole",
+    "Pothole"
+  ],
+  "num_classes": 5,
+  "model_type": "Random Forest (Color Features)"
+}

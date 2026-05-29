@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Leaderboard - NagarVaani</title>
+<link rel="stylesheet" href="/CSS/style.css">
+<link rel="stylesheet" href="/CSS/navbar.css">
+<link rel="stylesheet" href="/CSS/leaderboard.css">
+</head>
+
+<body>
+  <nav style="background: rgba(0,0,0,0.35); backdrop-filter: blur(10px); padding: 12px 40px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.08);">
+    <a href="/" style="color:white; text-decoration:none; font-weight:900; font-size:18px; display:inline-flex; align-items:center; gap:10px;">
+      <span style="width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,.6),rgba(0,212,255,.6));display:grid;place-items:center;box-shadow:0 0 30px rgba(0,212,255,.12);">🏠</span>
+      NagarVaani
+    </a>
+    <a href="/dashboard" style="color:white; text-decoration:none; margin-left:22px; font-weight:850; opacity:.95;">Dashboard</a>
+    <a href="/report" style="color:white; text-decoration:none; margin-left:22px; font-weight:850; opacity:.95;">Report</a>
+  </nav>
+
+  <div class="leb-root">
+
+    <div class="leb-bg"></div>
+    <div class="leb-waves"></div>
+    <div id="lebParticles"></div>
+
+    <div class="leb-shell">
+      <div class="leb-topbar">
+        <div class="leb-title">
+          <div class="leb-badge"><span class="dot"></span><span style="font-weight:900;">LIVE RANKING</span></div>
+          <h1>Cyber Citizen Leaderboard</h1>
+          <p>Ranked by <b>totalScore</b> (points + credit points). Top 3 get a podium effect.</p>
+        </div>
+
+        <div class="leb-controls">
+          <div class="leb-tabs" role="tablist" aria-label="Leaderboard Range">
+            <button class="leb-tab active" data-range="weekly" type="button">Weekly</button>
+            <button class="leb-tab" data-range="monthly" type="button">Monthly</button>
+            <button class="leb-tab" data-range="all" type="button">All-Time</button>
+          </div>
+
+          <div class="leb-field" style="margin-left:auto;">
+            <span style="color:var(--muted);font-weight:800;font-size:.85rem;">Search</span>
+            <input id="lebSearch" type="text" placeholder="Type a name or email" />
+          </div>
+
+          <div class="leb-field">
+            <span style="color:var(--muted);font-weight:800;font-size:.85rem;">Sort</span>
+            <select id="lebSort">
+              <option value="rank" selected>Rank</option>
+              <option value="totalScore">Score</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="leb-card" id="leaderboardCard">
+        <div class="leb-head">
+          <div class="hint">Ranked Citizens</div>
+          <div class="hint" id="lebMeta">—</div>
+        </div>
+
+        <ul class="leb-list" id="lebList"></ul>
+
+        <div id="lebEmpty" class="leb-empty" style="display:none;">
+          No citizens registered yet.
+        </div>
+      </div>
+
+      <div class="leb-actions">
+        <div>Tip: hover rows for glow • click avatar for micro-interaction</div>
+        <div style="color:var(--muted);">Smooth UI • premium cyber-glass</div>
+      </div>
+
+      <div style="margin-top:18px; color: var(--muted); font-weight:800; font-size:.85rem; text-align:center;">
+        Showing: points + credit points • Responsive UI for mobile/tablet/desktop
+      </div>
+    </div>
+  </div>
+
+
+  <script src="/js/leaderboard.js"></script>
+</body>
+</html>
+

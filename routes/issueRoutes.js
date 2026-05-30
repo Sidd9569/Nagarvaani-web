@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 // ======================================================
-// GEOCODING (OpenStreetMap Nominatim - NO API KEY)
+// GEOCODING (OpenStreetMap - Render SAFE)
 // ======================================================
 
 router.get("/geocode", (req, res) => {
@@ -21,14 +21,14 @@ router.get("/geocode", (req, res) => {
       });
     }
 
-    const nominatimUrl =
+    const url =
       `https://nominatim.openstreetmap.org/search` +
       `?q=${encodeURIComponent(address)}` +
       `&format=json&limit=5`;
 
     https
       .get(
-        nominatimUrl,
+        url,
         {
           headers: {
             "User-Agent": "NagarVaani/1.0"
@@ -45,20 +45,11 @@ router.get("/geocode", (req, res) => {
             try {
               const results = JSON.parse(data);
 
-              if (!results || results.length === 0) {
-                return res.json({
-                  success: true,
-                  results: []
-                });
-              }
-
-              const formatted = results.map((place) => ({
+              const formatted = (results || []).map((place) => ({
                 latitude: parseFloat(place.lat),
                 longitude: parseFloat(place.lon),
-                place_name:
-                  place.name || "Unknown",
-                formatted_address:
-                  place.display_name
+                place_name: place.name || "Unknown",
+                formatted_address: place.display_name
               }));
 
               return res.json({
@@ -92,49 +83,79 @@ router.get("/geocode", (req, res) => {
 });
 
 // ======================================================
-// ISSUE ROUTES
+// ISSUE ROUTES (Render SAFE)
 // ======================================================
 
-// Report issue (with image upload)
+// Report issue
 router.post(
   "/report",
   authMiddleware,
   upload.single("image"),
-  issueController.reportIssue
+  issueController.reportIssue || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "reportIssue controller missing"
+    });
+  })
 );
 
-// AI detection (image → issue type)
+// AI detect issue type (FIXED SAFETY WRAPPER)
 router.post(
   "/detect",
   upload.single("image"),
-  issueController.detectIssueType
+  issueController.detectIssueType || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "detectIssueType controller missing"
+    });
+  })
 );
 
 // Vote issue
 router.post(
   "/vote/:id",
   authMiddleware,
-  issueController.voteIssue
+  issueController.voteIssue || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "voteIssue controller missing"
+    });
+  })
 );
 
 // Resolve issue
 router.put(
   "/resolve/:id",
   authMiddleware,
-  issueController.resolveIssue
+  issueController.resolveIssue || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "resolveIssue controller missing"
+    });
+  })
 );
 
 // Get all issues
 router.get(
   "/",
-  issueController.getIssues
+  issueController.getIssues || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "getIssues controller missing"
+    });
+  })
 );
 
-// Get logged-in user's issues
+// Get user issues
 router.get(
   "/user/my-issues",
   authMiddleware,
-  issueController.getUserIssues
+  issueController.getUserIssues || ((req, res) => {
+    return res.status(500).json({
+      success: false,
+      error: "getUserIssues controller missing"
+    });
+  })
 );
 
 module.exports = router;

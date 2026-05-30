@@ -1,10 +1,14 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const FormData = require("form-data");
+
+const AI_API_URL =
+    process.env.AI_API_URL ||
+    "https://my-backend-8w9s.onrender.com";
 
 async function detectIssue(imagePath) {
     try {
-        // Read image file as binary
         if (!fs.existsSync(imagePath)) {
             console.log("[ERROR] Image file not found:", imagePath);
 
@@ -17,26 +21,24 @@ async function detectIssue(imagePath) {
             };
         }
 
-        // Create FormData for file upload
         const form = new FormData();
-        const fileBuffer = fs.readFileSync(imagePath);
-        const blob = new Blob([fileBuffer]);
 
-        form.append("image", blob, path.basename(imagePath));
+        form.append(
+            "image",
+            fs.createReadStream(imagePath)
+        );
 
-        // Send to Python API
         const response = await axios.post(
-            "http://localhost:8000/detect",
+            `${AI_API_URL}/detect`,
             form,
             {
-                headers: form.getHeaders
-                    ? form.getHeaders()
-                    : { "Content-Type": "multipart/form-data" },
+                headers: {
+                    ...form.getHeaders()
+                },
                 timeout: 30000
             }
         );
 
-        // Return normalized response
         return {
             success: response.data.success !== false,
             issueType: response.data.issueType || "Unknown",
@@ -48,8 +50,10 @@ async function detectIssue(imagePath) {
             source: response.data.source || "model"
         };
     } catch (error) {
-        console.log("[WARNING] AI Detection Error:", error.message);
-        console.log("[INFO] Model not available - classification failed");
+        console.log(
+            "[WARNING] AI Detection Error:",
+            error.response?.data || error.message
+        );
 
         return {
             success: false,

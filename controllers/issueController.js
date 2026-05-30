@@ -12,56 +12,42 @@ const {
   sendIssueResolvedEmail
 } = require("../services/emailService");
 
-// ======================================
-// AI SERVICE URL
-// ======================================
+// ============================
+// AI SERVICE (RENDER READY)
+// ============================
 
 const AI_API_URL =
   process.env.AI_API_URL ||
   "https://my-backend-8w9s.onrender.com";
 
-// ======================================
-// ISSUE TYPE NORMALIZATION
-// ======================================
-
-const issueTypeMapping = {
-  pothole: "Pothole",
-  pothole_mark: "Pothole",
-
-  garbage: "Garbage",
-  trash: "Garbage",
-  litter: "Garbage",
-
-  streetlight: "Broken Streetlight",
-  street_light: "Broken Streetlight",
-  broken_light: "Broken Streetlight",
-  light: "Broken Streetlight",
-
-  manhole: "Manhole",
-  manhole_cover: "Manhole",
-
-  electric: "Electrical Fault",
-  electrical: "Electrical Fault",
-  electrical_fault: "Electrical Fault",
-  wire: "Electrical Fault",
-  cable: "Electrical Fault",
-  power_line: "Electrical Fault"
-};
+// ============================
+// NORMALIZER
+// ============================
 
 function normalizeIssueType(value) {
   if (!value) return "Garbage";
 
   const key = String(value)
-    .trim()
     .toLowerCase()
-    .replace(/[\s-]+/g, "_");
+    .replace(/\s+/g, "_");
 
-  return issueTypeMapping[key] || "Garbage";
+  const map = {
+    pothole: "Pothole",
+    garbage: "Garbage",
+    trash: "Garbage",
+    streetlight: "Broken Streetlight",
+    street_light: "Broken Streetlight",
+    manhole: "Manhole",
+    electric: "Electrical Fault",
+    electrical_fault: "Electrical Fault"
+  };
+
+  return map[key] || "Garbage";
 }
 
-// ======================================
-// AI IMAGE DETECTION
-// ======================================
+// ============================
+// DETECT ISSUE (AI)
+// ============================
 
 exports.detectIssueType = async (req, res) => {
   try {
@@ -72,192 +58,186 @@ exports.detectIssueType = async (req, res) => {
       });
     }
 
-    console.log("Image received:", req.file.filename);
-
     const form = new FormData();
 
     form.append(
       "image",
-      fs.createReadStream(req.file.path),
-      req.file.originalname
+      fs.createReadStream(req.file.path)
     );
 
     const response = await axios.post(
       `${AI_API_URL}/detect`,
       form,
       {
-        headers: {
-          ...form.getHeaders()
-        },
+        headers: form.getHeaders(),
         timeout: 30000
       }
     );
 
-    console.log(
-      "AI Response:",
-      response.data
-    );
-
-    const detectedObject =
+    const detected =
       response.data.detectedObject ||
       response.data.issueType ||
       "Unknown";
 
-    const issueType =
-      normalizeIssueType(
-        response.data.issueType ||
-        detectedObject
-      );
-
-    return res.status(200).json({
+    return res.json({
       success: true,
-      detectedObject,
-      issueType,
-      confidence:
-        response.data.confidence || 0,
-      source:
-        response.data.source ||
-        "AI Model"
+      detectedObject: detected,
+      issueType: normalizeIssueType(detected),
+      confidence: response.data.confidence || 0,
+      source: "AI"
     });
 
-  } catch (error) {
-
-    console.error(
-      "AI Detection Error:",
-      error.response?.data ||
-      error.message
-    );
+  } catch (err) {
+    console.error("AI ERROR:", err.message);
 
     return res.status(500).json({
       success: false,
-      error:
-        error.response?.data?.error ||
-        error.message,
+      error: "AI detection failed",
       issueType: "Garbage"
     });
 
   } finally {
-
-    if (
-      req.file &&
-      req.file.path &&
-      fs.existsSync(req.file.path)
-    ) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (err) {
-        console.log(
-          "File cleanup error:",
-          err.message
-        );
-      }
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
     }
   }
 };
 
-// ======================================
+// ============================
 // REPORT ISSUE
-// ======================================
+// ============================
 
 exports.reportIssue = async (req, res) => {
   try {
-
-    const {
-      issueType,
-      description,
-      latitude,
-      longitude,
-      priority
-    } = req.body;
+    const { issueType, description, latitude, longitude, priority } = req.body;
 
     const ticketId = generateTicket();
 
-    const issue = new Issue({
+    const issue = await Issue.create({
       ticketId,
       issueType,
       description,
       latitude,
       longitude,
       priority,
-      image: req.file
-        ? req.file.filename
-        : null,
+      image: req.file?.filename || null,
       reportedBy: req.user.id
     });
 
-    await issue.save();
-
-    const user =
-      await User.findById(req.user.id);
+    const user = await User.findById(req.user.id);
 
     if (!user) {
-      await Issue.findByIdAndDelete(
-        issue._id
-      );
-
-      return res.status(404).json({
-        error: "User not found"
-      });
+      return res.status(404).json({ error: "User not found" });
     }
 
     user.points += 10;
     user.reportsSubmitted += 1;
-
     await user.save();
-
-    try {
-      await sendIssueReportEmail(
-        user.email,
-        user.name,
-        ticketId,
-        issueType,
-        description,
-        latitude,
-        longitude
-      );
-    } catch (err) {
-      console.log(
-        "Email Error:",
-        err.message
-      );
-    }
-
-    try {
-      await sendAdminNotification(
-        ticketId,
-        issueType,
-        description,
-        latitude,
-        longitude,
-        priority,
-        user.name,
-        user.email,
-        user.mobileNumber
-      );
-    } catch (err) {
-      console.log(
-        "Admin Email Error:",
-        err.message
-      );
-    }
 
     return res.status(201).json({
       success: true,
-      message:
-        "Issue reported successfully",
-      ticketId
+      ticketId,
+      message: "Issue reported successfully"
     });
 
-  } catch (error) {
-
-    console.error(
-      "Report Issue Error:",
-      error
-    );
+  } catch (err) {
+    console.error("REPORT ERROR:", err.message);
 
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: err.message
     });
+  }
+};
+
+// ============================
+// GET ISSUES
+// ============================
+
+exports.getIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find()
+      .populate("reportedBy", "name email");
+
+    res.json(issues);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ============================
+// VOTE ISSUE
+// ============================
+
+exports.voteIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    const userId = req.user.id.toString();
+
+    const index = issue.votes.findIndex(v => v.toString() === userId);
+
+    if (index >= 0) {
+      issue.votes.splice(index, 1);
+    } else {
+      issue.votes.push(req.user.id);
+    }
+
+    await issue.save();
+
+    res.json({
+      votes: issue.votes.length,
+      voted: index === -1
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ============================
+// RESOLVE ISSUE
+// ============================
+
+exports.resolveIssue = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    issue.status = "Resolved";
+    await issue.save();
+
+    res.json({
+      message: "Resolved",
+      ticketId: issue.ticketId
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ============================
+// USER ISSUES
+// ============================
+
+exports.getUserIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find({
+      reportedBy: req.user.id
+    });
+
+    res.json(issues);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

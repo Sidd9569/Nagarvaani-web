@@ -1186,7 +1186,7 @@ async function loadDashStats(){
 async function loadAllIssues(){
   const token=localStorage.getItem('token');
   try{
-    const res=await fetch('http://localhost:5000/api/issues',{headers:token?{Authorization:`Bearer ${token}`}:{}});
+    const res=await fetch('/api/issues',{headers:token?{Authorization:`Bearer ${token}`}:{}});
     if(!res.ok)throw Error('Failed');
     const issues=await res.json();
     const tbody=document.getElementById('issuesBody');
@@ -1252,7 +1252,7 @@ function filterTable(){
 async function voteOnIssue(id,btn){
   const token=localStorage.getItem('token');
   try{
-    const r=await fetch(`http://localhost:5000/api/issues/vote/${id}`,{method:'POST',headers:{Authorization:`Bearer ${token}`}});
+    const r=await fetch(`/api/issues/vote/${id}`,{method:'POST',headers:{Authorization:`Bearer ${token}`}});
     if(!r.ok)throw Error('Vote failed');
     const d=await r.json();
     btn.innerHTML=`👍 ${d.votes}`;
@@ -1266,7 +1266,7 @@ async function markAsResolved(id,btn){
   if(!confirm('Mark as resolved?'))return;
   const token=localStorage.getItem('token');
   try{
-    const r=await fetch(`http://localhost:5000/api/issues/resolve/${id}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
+    const r=await fetch(`/api/issues/resolve/${id}`,{method:'PUT',headers:{Authorization:`Bearer ${token}`}});
     if(!r.ok)throw Error('Failed');
     const d=await r.json();
     alert(`✅ Issue ${d.ticketId} resolved!`);

@@ -1,14 +1,10 @@
-```javascript
 // ==========================================
-// API CONFIGURATION
+// RENDER API CONFIGURATION
 // ==========================================
 
-const API_BASE_URL =
-    window.location.hostname === "localhost"
-        ? "http://localhost:5000"
-        : "https://nagarvaani-web.onrender.com";
+const API_BASE_URL = "https://nagarvaani-web.onrender.com";
 
-const token = localStorage.getItem("token");
+const token = localStorage.getItem("token") || "";
 
 // ==========================================
 // DASHBOARD
@@ -16,71 +12,64 @@ const token = localStorage.getItem("token");
 
 async function loadDashboard() {
     try {
-        const res = await fetch(
-            API_BASE_URL + "/api/dashboard/stats",
+        const response = await fetch(
+            `${API_BASE_URL}/api/dashboard/stats`,
             {
                 headers: {
-                    Authorization: "Bearer " + token
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
 
-        if (!res.ok) {
-            throw new Error("Failed to load dashboard");
+        if (!response.ok) {
+            console.error(
+                "Dashboard API Error:",
+                response.status
+            );
+            return;
         }
 
-        const data = await res.json();
+        const data = await response.json();
 
-        document.getElementById("totalIssues").innerText =
-            data.total || 0;
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value;
+        };
 
-        document.getElementById("resolvedIssues").innerText =
-            data.resolved || 0;
+        setText("totalIssues", data.total || 0);
+        setText("resolvedIssues", data.resolved || 0);
+        setText("pendingIssues", data.pending || 0);
+        setText("points", data.points || 0);
+        setText("totalUsers", data.totalUsers || 0);
+        setText("userPoints", data.points || 0);
+        setText("userCreditPoints", data.creditPoints || 0);
+        setText(
+            "userTotalScore",
+            (data.points || 0) + (data.creditPoints || 0)
+        );
+        setText("userReports", data.reportsSubmitted || 0);
 
-        document.getElementById("pendingIssues").innerText =
-            data.pending || 0;
+        const rankEl =
+            document.getElementById("userRank");
 
-        document.getElementById("points").innerText =
-            data.points || 0;
-
-        if (document.getElementById("userRank")) {
-            const rank = data.rank || 0;
-
-            document.getElementById("userRank").innerText =
-                rank > 0 ? "#" + rank : "-";
+        if (rankEl) {
+            rankEl.innerText =
+                data.rank > 0
+                    ? `#${data.rank}`
+                    : "-";
         }
 
-        if (document.getElementById("totalUsers")) {
-            document.getElementById("totalUsers").innerText =
-                data.totalUsers || 0;
-        }
-
-        if (document.getElementById("userPoints")) {
-            document.getElementById("userPoints").innerText =
-                data.points || 0;
-        }
-
-        if (document.getElementById("userCreditPoints")) {
-            document.getElementById("userCreditPoints").innerText =
-                data.creditPoints || 0;
-        }
-
-        if (document.getElementById("userTotalScore")) {
-            document.getElementById("userTotalScore").innerText =
-                (data.points || 0) +
-                (data.creditPoints || 0);
-        }
-
-        if (document.getElementById("userReports")) {
-            document.getElementById("userReports").innerText =
-                data.reportsSubmitted || 0;
-        }
-
-        if (data.monthly) {
+        if (
+            data.monthly &&
+            document.getElementById("reportChart")
+        ) {
             createChart(data.monthly);
         }
     } catch (error) {
-        console.error("Dashboard Error:", error);
+        console.error(
+            "Dashboard Load Error:",
+            error
+        );
     }
 }
 
@@ -90,22 +79,24 @@ async function loadDashboard() {
 
 async function loadAllIssues() {
     try {
-        const res = await fetch(
-            API_BASE_URL + "/api/issues",
+        const response = await fetch(
+            `${API_BASE_URL}/api/issues`,
             {
                 headers: {
-                    Authorization: "Bearer " + token
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
 
-        if (!res.ok) {
-            throw new Error(
-                "Failed to load issues"
+        if (!response.ok) {
+            console.error(
+                "Issues API Error:",
+                response.status
             );
+            return;
         }
 
-        const issues = await res.json();
+        const issues = await response.json();
 
         const tbody =
             document.getElementById("issuesBody");
@@ -113,14 +104,21 @@ async function loadAllIssues() {
         const noIssuesMsg =
             document.getElementById("noIssuesMsg");
 
+        if (!tbody) return;
+
         tbody.innerHTML = "";
 
         if (!issues || issues.length === 0) {
-            noIssuesMsg.style.display = "block";
+            if (noIssuesMsg) {
+                noIssuesMsg.style.display =
+                    "block";
+            }
             return;
         }
 
-        noIssuesMsg.style.display = "none";
+        if (noIssuesMsg) {
+            noIssuesMsg.style.display = "none";
+        }
 
         issues.forEach((issue) => {
             const row =
@@ -134,7 +132,7 @@ async function loadAllIssues() {
                 <td>${issue.priority || "-"}</td>
                 <td>
                     <button onclick="voteOnIssue('${issue._id}', this)">
-                        👍 ${issue.votes ? issue.votes.length : 0}
+                        👍 ${issue.votes?.length || 0}
                     </button>
                 </td>
             `;
@@ -142,7 +140,10 @@ async function loadAllIssues() {
             tbody.appendChild(row);
         });
     } catch (error) {
-        console.error(error);
+        console.error(
+            "Load Issues Error:",
+            error
+        );
     }
 }
 
@@ -152,30 +153,30 @@ async function loadAllIssues() {
 
 async function voteOnIssue(issueId, button) {
     try {
-        const res = await fetch(
-            API_BASE_URL +
-                "/api/issues/vote/" +
-                issueId,
+        const response = await fetch(
+            `${API_BASE_URL}/api/issues/vote/${issueId}`,
             {
                 method: "POST",
                 headers: {
-                    Authorization:
-                        "Bearer " + token
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
 
-        const data = await res.json();
+        const data =
+            await response.json();
 
-        if (!res.ok) {
+        if (!response.ok) {
             throw new Error(
-                data.error || "Vote failed"
+                data.error ||
+                "Failed to vote"
             );
         }
 
         button.innerHTML =
-            "👍 " + data.votes;
+            `👍 ${data.votes}`;
     } catch (error) {
+        console.error(error);
         alert(error.message);
     }
 }
@@ -186,25 +187,23 @@ async function voteOnIssue(issueId, button) {
 
 async function markAsResolved(issueId) {
     try {
-        const res = await fetch(
-            API_BASE_URL +
-                "/api/issues/resolve/" +
-                issueId,
+        const response = await fetch(
+            `${API_BASE_URL}/api/issues/resolve/${issueId}`,
             {
                 method: "PUT",
                 headers: {
-                    Authorization:
-                        "Bearer " + token
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
 
-        const data = await res.json();
+        const data =
+            await response.json();
 
-        if (!res.ok) {
+        if (!response.ok) {
             throw new Error(
                 data.error ||
-                "Resolve failed"
+                "Failed to resolve issue"
             );
         }
 
@@ -215,36 +214,43 @@ async function markAsResolved(issueId) {
         loadDashboard();
         loadAllIssues();
     } catch (error) {
+        console.error(error);
         alert(error.message);
     }
 }
 
 // ==========================================
-// AWARD POINTS
+// AWARD CREDIT POINTS
 // ==========================================
 
 async function awardCreditPoints() {
-    const userId =
-        document.getElementById(
-            "awardUserId"
-        ).value;
-
-    const points =
-        document.getElementById(
-            "awardPoints"
-        ).value;
-
     try {
-        const res = await fetch(
-            API_BASE_URL +
-                "/api/rewards/award",
+        const userId =
+            document.getElementById(
+                "awardUserId"
+            )?.value;
+
+        const points =
+            document.getElementById(
+                "awardPoints"
+            )?.value;
+
+        if (!userId || !points) {
+            alert(
+                "Select user and points"
+            );
+            return;
+        }
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/rewards/award`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type":
                         "application/json",
                     Authorization:
-                        "Bearer " + token
+                        `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     userId,
@@ -253,13 +259,22 @@ async function awardCreditPoints() {
             }
         );
 
-        const data = await res.json();
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                data.message
+            );
+        }
 
         alert(
             data.message ||
-            "Points awarded"
+            "Points awarded successfully"
         );
     } catch (error) {
+        console.error(error);
         alert(error.message);
     }
 }
@@ -267,6 +282,8 @@ async function awardCreditPoints() {
 // ==========================================
 // CHART
 // ==========================================
+
+let chartInstance = null;
 
 function createChart(monthlyData) {
     const canvas =
@@ -276,7 +293,11 @@ function createChart(monthlyData) {
 
     if (!canvas) return;
 
-    new Chart(canvas, {
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(canvas, {
         type: "bar",
         data: {
             labels: [
@@ -284,12 +305,14 @@ function createChart(monthlyData) {
                 "May","Jun","Jul","Aug",
                 "Sep","Oct","Nov","Dec"
             ],
-            datasets: [
-                {
-                    label: "Reports",
-                    data: monthlyData
-                }
-            ]
+            datasets: [{
+                label: "Reports",
+                data: monthlyData
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 }
@@ -300,9 +323,16 @@ function createChart(monthlyData) {
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    () => {
+
+        if (!token) {
+            console.warn(
+                "User not logged in"
+            );
+            return;
+        }
+
         loadDashboard();
         loadAllIssues();
     }
 );
-```

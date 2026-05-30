@@ -1208,7 +1208,7 @@ function initCharts(monthlyData) {
 async function loadDashboardStats() {
   const token = localStorage.getItem('token');
   try {
-    const res = await fetch('http://localhost:5000/api/dashboard/stats', {
+    const res = await fetch('/api/dashboard/stats', {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) throw new Error('Not authenticated');

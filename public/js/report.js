@@ -1,34 +1,26 @@
 // ==========================================
-// NAGARVAANI REPORT.JS
+// NAGARVAANI REPORT.JS (RENDER VERSION)
 // ==========================================
 
-// Backend API URL
-const API_BASE_URL =
-window.location.hostname === "localhost"
-? "http://localhost:5000"
-: "https://nagarvaani-web.onrender.com";
+const API_BASE_URL = "https://nagarvaani-web.onrender.com";
 
 // ==========================================
 // PAGE LOAD
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", function () {
-console.log("Report page loaded");
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ Report page loaded");
 
+    const issueForm = document.getElementById("issueForm");
+    const locationBtn = document.getElementById("geoLocationBtn");
 
-const issueForm = document.getElementById("issueForm");
+    if (issueForm) {
+        issueForm.addEventListener("submit", handleIssueSubmit);
+    }
 
-if (issueForm) {
-    issueForm.addEventListener("submit", handleIssueSubmit);
-}
-
-const locationBtn = document.getElementById("geoLocationBtn");
-
-if (locationBtn) {
-    locationBtn.addEventListener("click", getUserCurrentLocation);
-}
-
-
+    if (locationBtn) {
+        locationBtn.addEventListener("click", getUserCurrentLocation);
+    }
 });
 
 // ==========================================
@@ -36,88 +28,79 @@ if (locationBtn) {
 // ==========================================
 
 async function handleIssueSubmit(event) {
-event.preventDefault();
+    event.preventDefault();
 
-```
-try {
-    const token = localStorage.getItem("token");
+    try {
+        const token = localStorage.getItem("token");
 
-    if (!token) {
-        alert("Please login first.");
-        window.location.href = "/login";
-        return;
-    }
-
-    const form = document.getElementById("issueForm");
-
-    if (!form) {
-        throw new Error("Issue form not found");
-    }
-
-    const formData = new FormData(form);
-
-    console.log("Submitting issue...");
-
-    const response = await fetch(
-        API_BASE_URL + "/api/issues/report",
-        {
-            method: "POST",
-            headers: {
-                Authorization: "Bearer " + token
-            },
-            body: formData
+        if (!token) {
+            alert("Please login first.");
+            window.location.href = "/login";
+            return;
         }
-    );
 
-    const result = await response.json();
+        const form = document.getElementById("issueForm");
 
-    console.log("Server Response:", result);
+        if (!form) {
+            throw new Error("Issue form not found.");
+        }
 
-    if (!response.ok) {
-        throw new Error(
-            result.message ||
-            result.error ||
-            "Failed to submit issue"
+        const formData = new FormData(form);
+
+        console.log("📤 Submitting issue to Render backend...");
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/issues/report`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            }
         );
-    }
 
-    if (result.ticketId) {
+        const result = await response.json();
+
+        console.log("Server Response:", result);
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                result.error ||
+                "Failed to submit issue"
+            );
+        }
+
         alert(
-            "Issue Reported Successfully\n\n" +
-            "Ticket ID: " +
-            result.ticketId
+            `✅ Issue Reported Successfully!\n\nTicket ID: ${result.ticketId}`
         );
 
         form.reset();
 
-        setTimeout(function () {
+        setTimeout(() => {
             window.location.href = "/dashboard";
         }, 1500);
-    } else {
-        alert(result.message || "Issue submitted successfully.");
+
+    } catch (error) {
+        console.error("❌ Issue Submission Error:", error);
+
+        if (
+            error.message.includes("token") ||
+            error.message.includes("jwt") ||
+            error.message.includes("User not found")
+        ) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            localStorage.removeItem("isLoggedIn");
+
+            alert("Session expired. Please login again.");
+            window.location.href = "/login";
+            return;
+        }
+
+        alert(error.message);
     }
-} catch (error) {
-    console.error("Issue Submission Error:", error);
-
-    if (
-        error.message.includes("token") ||
-        error.message.includes("jwt") ||
-        error.message.includes("User not found")
-    ) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("isLoggedIn");
-
-        alert("Session expired. Please login again.");
-
-        window.location.href = "/login";
-        return;
-    }
-
-    alert(error.message);
-}
-```
-
 }
 
 // ==========================================
@@ -125,92 +108,88 @@ try {
 // ==========================================
 
 function getUserCurrentLocation() {
-const button = document.getElementById("geoLocationBtn");
 
-```
-const latitudeInput =
-    document.querySelector("input[name='latitude']");
+    const button = document.getElementById("geoLocationBtn");
 
-const longitudeInput =
-    document.querySelector("input[name='longitude']");
+    const latitudeInput =
+        document.querySelector("input[name='latitude']");
 
-if (!navigator.geolocation) {
-    showStatus(
-        "Geolocation is not supported by this browser.",
-        "error"
-    );
-    return;
-}
+    const longitudeInput =
+        document.querySelector("input[name='longitude']");
 
-button.disabled = true;
-button.textContent = "Getting Location...";
-
-showStatus("Requesting GPS location...", "loading");
-
-navigator.geolocation.getCurrentPosition(
-    function (position) {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
-
-        latitudeInput.value = latitude;
-        longitudeInput.value = longitude;
-
-        console.log("Latitude:", latitude);
-        console.log("Longitude:", longitude);
-        console.log("Accuracy:", accuracy);
-
+    if (!navigator.geolocation) {
         showStatus(
-            "Location captured successfully (±" +
-                Math.round(accuracy) +
-                "m)",
-            "success"
+            "Geolocation is not supported by your browser.",
+            "error"
         );
-
-        button.disabled = false;
-        button.textContent =
-            "📍 Get My Current Location";
-    },
-
-    function (error) {
-        let message = "";
-
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                message =
-                    "Location permission denied.";
-                break;
-
-            case error.POSITION_UNAVAILABLE:
-                message =
-                    "Location unavailable.";
-                break;
-
-            case error.TIMEOUT:
-                message =
-                    "Location request timed out.";
-                break;
-
-            default:
-                message =
-                    "Unable to retrieve location.";
-        }
-
-        showStatus(message, "error");
-
-        button.disabled = false;
-        button.textContent =
-            "📍 Get My Current Location";
-    },
-
-    {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        return;
     }
-);
-```
 
+    button.disabled = true;
+    button.textContent = "Getting Location...";
+
+    showStatus("Requesting GPS location...", "loading");
+
+    navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            latitudeInput.value = latitude;
+            longitudeInput.value = longitude;
+
+            console.log("Latitude:", latitude);
+            console.log("Longitude:", longitude);
+            console.log("Accuracy:", accuracy);
+
+            showStatus(
+                `✅ Location captured (±${Math.round(accuracy)}m)`,
+                "success"
+            );
+
+            button.disabled = false;
+            button.textContent =
+                "📍 Get My Current Location";
+        },
+
+        (error) => {
+
+            let message = "Unable to retrieve location.";
+
+            switch (error.code) {
+
+                case error.PERMISSION_DENIED:
+                    message =
+                        "Location permission denied.";
+                    break;
+
+                case error.POSITION_UNAVAILABLE:
+                    message =
+                        "Location unavailable.";
+                    break;
+
+                case error.TIMEOUT:
+                    message =
+                        "Location request timed out.";
+                    break;
+            }
+
+            showStatus(message, "error");
+
+            button.disabled = false;
+            button.textContent =
+                "📍 Get My Current Location";
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
 }
 
 // ==========================================
@@ -218,40 +197,35 @@ navigator.geolocation.getCurrentPosition(
 // ==========================================
 
 function showStatus(message, type) {
-const statusContainer =
-document.getElementById("locationStatus");
 
-```
-const statusText =
-    document.getElementById("statusText");
+    const statusContainer =
+        document.getElementById("locationStatus");
 
-if (!statusContainer || !statusText) {
-    return;
-}
+    const statusText =
+        document.getElementById("statusText");
 
-statusContainer.style.display = "block";
-statusText.textContent = message;
+    if (!statusContainer || !statusText) {
+        return;
+    }
 
-if (type === "success") {
-    statusContainer.style.backgroundColor =
-        "#e8f5e9";
-    statusContainer.style.color =
-        "#2e7d32";
-}
+    statusContainer.style.display = "block";
+    statusText.textContent = message;
 
-if (type === "error") {
-    statusContainer.style.backgroundColor =
-        "#ffebee";
-    statusContainer.style.color =
-        "#c62828";
-}
+    switch (type) {
 
-if (type === "loading") {
-    statusContainer.style.backgroundColor =
-        "#e3f2fd";
-    statusContainer.style.color =
-        "#1565c0";
-}
-```
+        case "success":
+            statusContainer.style.backgroundColor = "#e8f5e9";
+            statusContainer.style.color = "#2e7d32";
+            break;
 
+        case "error":
+            statusContainer.style.backgroundColor = "#ffebee";
+            statusContainer.style.color = "#c62828";
+            break;
+
+        case "loading":
+            statusContainer.style.backgroundColor = "#e3f2fd";
+            statusContainer.style.color = "#1565c0";
+            break;
+    }
 }

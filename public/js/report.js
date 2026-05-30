@@ -15,7 +15,7 @@ window.location.hostname === "localhost"
 document.addEventListener("DOMContentLoaded", function () {
 console.log("Report page loaded");
 
-```
+
 const issueForm = document.getElementById("issueForm");
 
 if (issueForm) {
@@ -27,7 +27,7 @@ const locationBtn = document.getElementById("geoLocationBtn");
 if (locationBtn) {
     locationBtn.addEventListener("click", getUserCurrentLocation);
 }
-```
+
 
 });
 
